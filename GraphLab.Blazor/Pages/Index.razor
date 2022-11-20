@@ -1,0 +1,89 @@
+﻿@page "/"
+@using System.Threading
+@using GraphLab.Core.Algorithms
+@using GraphLab.Core.Algorithms.Search
+@using GraphLab.Core.Algorithms.Utils
+
+<div id="graph" style="height:90vh"></div>
+
+<button @onclick="RunDFS">Поиск в глубину</button>
+
+<button @onclick="RunBFS">Поиск в ширину</button>
+
+<button @onclick="NextStep" disabled="@(CurrentStep == null)">Следующий шаг</button>
+
+@code{
+    [Inject]
+    public ModelService ModelService { get; set; }
+
+    [Inject]
+    public IJSRuntime JSRuntime { get; set; }
+
+
+    /// <summary>
+    /// Привязка данных графа к визуальному отображению
+    /// </summary>
+    /// <param name="firstRender"></param>
+    /// <returns></returns>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ModelService.Generate(7, true, 100, 1000);
+            await JSRuntime.BindGraph(ModelService.Graph, true);
+        }
+        else
+        {
+            foreach (var vertex in ModelService.Graph.Verticies)
+            {
+                await JSRuntime.UpdateVertex(vertex,
+                    (Algorithm?.States != null) ? Algorithm.States[vertex] : SearchState.None, false);
+            }
+        }
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    /// <summary>
+    /// Алгоритм поиска
+    /// </summary>
+    public ISearchAlgorithm<City, Road> Algorithm { get; private set; }
+
+    /// <summary>
+    /// Текущий шаг алгоритма
+    /// </summary>
+    public AlgorithmStep CurrentStep { get; private set; }
+
+    /// <summary>
+    /// Запуск поиска в глубину
+    /// </summary>
+    protected void RunDFS()
+    {
+
+        Algorithm = new DFS<City, Road>(
+            ModelService.Graph,
+            ModelService.Graph.Verticies.First());
+
+        CurrentStep = Algorithm.Begin();
+    }
+
+    /// <summary>
+    /// Запуск поиска в ширину
+    /// </summary>
+    protected void RunBFS()
+    {
+        Algorithm = new BFS<City, Road>(
+            ModelService.Graph,
+            ModelService.Graph.Verticies.First());
+
+        CurrentStep = Algorithm.Begin();
+    }
+
+    /// <summary>
+    /// Переход к следующему шагу алгоритма
+    /// </summary>
+    protected void NextStep()
+    {
+        CurrentStep = CurrentStep();
+        StateHasChanged();
+    }
+}

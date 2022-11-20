@@ -1,0 +1,11 @@
+{
+  "version": "1.0",
+  "defaultProvider": "unpkg",
+  "libraries": [
+    {
+      "library": "vis-network@9.1.0",
+      "destination": "wwwroot/js/",
+      "files": [ "dist/**" ]
+    }
+  ]
+}

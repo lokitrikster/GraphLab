@@ -1,0 +1,98 @@
+﻿@page "/Zadanie3"
+@using System.Threading
+@using GraphLab.Core
+@using GraphLab.Core.Algorithms
+@using GraphLab.Core.Algorithms.Search
+@using GraphLab.Core.Algorithms.Utils
+
+<div id="graph" style="height:90vh"></div>
+
+<button @onclick="RunPrim">Алгоритм Прима</button>
+<button @onclick="RunKruskal">Алгоритм Крускала</button>
+
+@code {
+
+    [Inject]
+    public ModelService ModelService { get; set; }
+
+
+
+    [Inject]
+    public IJSRuntime JSRuntime { get; set; }
+
+    /// <summary>
+    /// Привязка данных графа к визуальному отображению
+    /// </summary>
+    /// <param name="firstRender"></param>
+    /// <returns></returns>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ModelService.Generate(7, false, 1, 10);
+            await JSRuntime.BindGraph(ModelService.Graph, false);
+        }
+
+        if (runPrim)
+        {
+            await JSRuntime.UpdateVertex(ModelService.Graph.Verticies.First(), SearchState.Current, false);
+
+            foreach (var edge in ModelService.Graph.Edges)
+                await JSRuntime.UpdateEdge(edge, "lightblue", false);
+
+            foreach (var edge in MST)
+            {
+                await JSRuntime.UpdateEdge(edge, "red", false);
+            }
+        }
+
+        if (runKruskal)
+        {
+            await JSRuntime.UpdateVertex(ModelService.Graph.Verticies.First(), SearchState.Current, false);
+
+            foreach(var edge in ModelService.Graph.Edges)
+                await JSRuntime.UpdateEdge(edge, "lightblue", false);
+
+            foreach (var edge in MST)
+            {
+                await JSRuntime.UpdateEdge(edge, "blue", false);
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public List<Road> MST { get; set; }
+    public bool runPrim { get; set; }
+    public bool runKruskal { get; set; }
+
+
+
+    protected void RunPrim()
+    {
+        runKruskal = false;
+        AlgPrim<City, Road> prim = new AlgPrim<City, Road>(ModelService.Graph);
+        MST = prim.Begin();
+        runPrim = true;
+        StateHasChanged();
+    }
+
+    protected void RunKruskal()
+    {
+        runPrim = false;
+        MST = null;
+        AlgKruskal<City, Road> kruskal = new AlgKruskal<City, Road>(ModelService.Graph);
+        MST = kruskal.Begin();
+        runKruskal = true;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        MST = null;
+        runPrim = false;
+        runKruskal = false;
+
+        await base.OnInitializedAsync();
+    }
+}

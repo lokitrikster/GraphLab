@@ -1,0 +1,58 @@
+﻿@page "/Zadanie5"
+@using System.Threading
+@using GraphLab.Core
+@using GraphLab.Core.Algorithms
+@using GraphLab.Core.Algorithms.Search
+@using GraphLab.Core.Algorithms.Utils
+
+<div id="graph" style="height:60vh"></div>
+
+<button @onclick="RunFloydWarshell">Алгоритм Флойда-Уоршелла</button>
+
+<div id="graph-matrix">
+    @if (paintMatrix) {
+        <Component Cities="@ModelService.Graph.Verticies" ReachableMatrix="@distance" StrongComp="@null"></Component>
+    }
+</div>
+
+@code {
+
+    [Inject]
+    public ModelService ModelService { get; set; }
+
+    [Inject]
+    public IJSRuntime JSRuntime { get; set; }
+
+    public int[,] distance { get; set; }
+    public int[,] way { get; set; }
+    public bool paintMatrix;
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+
+            ModelService.Generate(7, true, 1, 10);
+            await JSRuntime.BindGraph(ModelService.Graph, true);
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    protected void RunFloydWarshell()
+    {
+        AlgFloydWarshell<City, Road> alg = new AlgFloydWarshell<City, Road>(ModelService.Graph);
+        distance = alg.Begin();
+        way = alg.next;
+        paintMatrix = true;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        paintMatrix = false;
+        distance = null;
+        way = null;
+        await base.OnInitializedAsync();
+    }
+
+}

@@ -1,0 +1,66 @@
+﻿@page "/Zadanie6"
+@using System.Threading
+@using GraphLab.Core
+@using GraphLab.Core.Algorithms
+@using GraphLab.Core.Algorithms.Search
+@using GraphLab.Core.Algorithms.Utils
+
+<div id="graph" style="height:90vh"></div>
+
+<button @onclick="RunSeachCycle">Поиск Эйлерова цикла</button>
+
+@code {
+
+    [Inject]
+    public ModelService ModelService { get; set; }
+
+    [Inject]
+    public IJSRuntime JSRuntime { get; set; }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            ModelService.GenerateEulerianFraph();
+            await JSRuntime.BindGraph(ModelService.Graph, false);
+        }
+
+        if (paintCycle)
+        {
+            for (int i = 0; i < Cycle.Count - 1; i++)
+            {
+                Road startFrom = allEdges.Find(x => x.From == Cycle[i] && x.To == Cycle[i + 1]);
+                startFrom.Price = i + 1;
+                Road startTo = allEdges.Find(x => x.From == Cycle[i + 1] && x.To == Cycle[i]);
+                startTo.Price = i + 1;
+                await JSRuntime.PainEulerianCycle(startFrom, startTo);
+            }
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    public List<City> Cycle { get; set; }
+    public List<Road> allEdges { get; set; }
+    public bool paintCycle { get; set; }
+
+
+    protected void RunSeachCycle()
+    {
+        EulerianCycle<City, Road> c = new EulerianCycle<City, Road>(ModelService.Graph);
+        Cycle = c.Begin();
+        foreach (var edge in ModelService.Graph.Edges)
+            allEdges.Add(edge);
+        paintCycle = true;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        allEdges = new();
+        paintCycle = false;
+
+        await base.OnInitializedAsync();
+    }
+
+}

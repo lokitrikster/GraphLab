@@ -1,0 +1,56 @@
+﻿@using System.Threading
+@using GraphLab.Core
+@using GraphLab.Core.Algorithms
+@using GraphLab.Core.Algorithms.Search
+@using GraphLab.Core.Algorithms.Utils
+
+@if (cities != null && list != null)
+{
+    <div id="graph-matrix" class="row">
+        <table class="table col-6">
+            <thead>
+                <tr>
+                    @foreach (var item in Cities)
+                    {
+                        <th>@item.Name</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var l in list)
+                {
+                <tr>
+                    @foreach (var val in l)
+                    {
+                        @if (val == int.MaxValue)
+                        {
+                            <td>...</td>
+                        }
+
+                        @if (val != int.MaxValue)
+                        {
+                            <td>@val</td>
+                        }
+                    }
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public ISet<City> Cities { get; set; }
+    [Parameter] public List<List<int>> list { get; set; }
+
+    private City[] cities;
+
+    protected override void OnParametersSet()
+    {
+        if (Cities is not null)
+        {
+            cities = new City[Cities.Count];
+            Cities.CopyTo(cities, 0);
+        }
+    }
+}

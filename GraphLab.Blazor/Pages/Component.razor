@@ -1,0 +1,77 @@
+﻿@using System.Threading
+@using GraphLab.Core
+@using GraphLab.Core.Algorithms
+@using GraphLab.Core.Algorithms.Search
+@using GraphLab.Core.Algorithms.Utils
+
+@if (cities != null && ReachableMatrix != null)
+{
+    <div id="graph-matrix" class="row">
+        <table class="table col-6">
+            <thead>
+                <tr>
+                    <th></th>
+                    @foreach (var item in Cities)
+                    {
+                        <th>@item.Name</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for (var i = 0; i < cities.Length; i++)
+                {
+                    <tr>
+                        <td><h6>@cities[i].Name</h6></td>
+                        @for (var j = 0; j < Cities.Count; j++)
+                        {
+                            @if (ReachableMatrix[i, j] == int.MaxValue)
+                            {
+                                <td>...</td>
+                            }
+                            else
+                            {
+                                <td>@ReachableMatrix[i, j]</td>
+                            }
+
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@if (StrongComp != null)
+{
+    <div id="comp-list" class="row">
+        <table>
+                @foreach(var comp in StrongComp)
+                {
+                    <tr>
+                        @foreach (var c in comp)
+                        {
+                            <th>@c.Name</th>
+                        }
+                    </tr>
+                }
+
+        </table>
+    </div>
+}
+
+@code {
+    [Parameter] public ISet<City> Cities { get; set; }
+    [Parameter] public int[,] ReachableMatrix { get; set; }
+    [Parameter] public List<City[]> StrongComp { get; set; }
+
+    private City[] cities;
+
+    protected override void OnParametersSet()
+    {
+        if (Cities is not null)
+        {
+            cities = new City[Cities.Count];
+            Cities.CopyTo(cities, 0);
+        }
+    }
+}

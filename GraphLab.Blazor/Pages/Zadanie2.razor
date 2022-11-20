@@ -1,0 +1,102 @@
+﻿@page "/Zadanie2"
+@using System.Threading
+@using GraphLab.Core
+@using GraphLab.Core.Algorithms
+@using GraphLab.Core.Algorithms.Search
+@using GraphLab.Core.Algorithms.Utils
+
+<div id="graph" style="height:60vh"></div>
+
+<button @onclick="ReachMatrix">Расчет матрицы достижимости</button>
+
+<button @onclick="StrongConComp">Определение сильных компонентов связности</button>
+<button @onclick="PaintStrongComp" disabled="@(StrongComponents == null)">Раскрасить компоненты</button>
+
+<div id="graph-matrix">
+    <Component Cities="@Cities" ReachableMatrix="@ReachableMatrix" StrongComp="@StrongComponents"></Component>
+</div>
+
+@code {
+    [Inject]
+    public ModelService ModelService { get; set; }
+
+    [Inject]
+    public IJSRuntime JSRuntime { get; set; }
+
+    /// <summary>
+    /// Текущий шаг алгоритма
+    /// </summary>
+    public AlgorithmStep CurrentStep { get; private set; }
+
+    public ISet<City> Cities { get; set; }
+
+    public int[,] ReachableMatrix { get; set; }
+
+    public List<City[]> StrongComponents { get; set; }
+
+    public bool PaintComponent { get; set; }
+
+
+    /// <summary>
+    /// Привязка данных графа к визуальному отображению
+    /// </summary>
+    /// <param name="firstRender"></param>
+    /// <returns></returns>
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+
+        if (firstRender)
+        {
+            ModelService.Generate(7, true, 100, 1000);
+            await JSRuntime.BindGraph(ModelService.Graph, true);
+        }
+
+        if(PaintComponent)
+        {
+            await JSRuntime.UpdateStrongComp(StrongComponents);
+        }
+
+        await base.OnAfterRenderAsync(firstRender);
+    }
+
+    /// <summary>
+    /// Вывод матрицы достижимости
+    /// </summary>
+    protected void ReachMatrix()
+    {
+        StrongComponents = null;
+        PaintComponent = false;
+        ReachableMatrix = ModelService.Graph.ReachabilityMatrix();
+        Cities = ModelService.Graph.Verticies;
+    }
+
+    /// <summary>
+    /// Определение компонентов сильной связности
+    /// </summary>
+    protected void StrongConComp()
+    {
+        Cities = null;
+        ReachableMatrix = null;
+        PaintComponent = false;
+        StrongCompAlg<City, Road> w = new StrongCompAlg<City, Road>();
+        StrongComponents = w.Search(ModelService.Graph);
+    }
+
+    /// <summary>
+    /// Раскраска компонентов сильной связности
+    /// </summary>
+    protected void PaintStrongComp()
+    {
+        PaintComponent = true;
+        StateHasChanged();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Cities = null;
+        ReachableMatrix = null;
+        StrongComponents = null;
+        PaintComponent = false;
+        await base.OnInitializedAsync();
+    }
+}
